@@ -1,79 +1,82 @@
-import { Request, Response } from 'express'
-import prisma from '../client'
+import { Request, Response } from "express";
+import prisma from "../client";
 
 export const getMediaGenres = async (req: Request, res: Response) => {
   try {
-    const mediaGenres = await prisma.mediaGenre.findMany({
+    const mediaGenres = await prisma.media_genre.findMany();
+    res.status(200).send(mediaGenres);
+  } catch (error) {
+    res.status(500).send({ error: error });
+  }
+};
+
+export const getMediaGenresByMediaId = async (req: Request, res: Response) => {
+  try {
+    const mediaId = req.params.media_id;
+
+    if (!mediaId) {
+      res.status(400).send({ error: "Media ID is required" });
+    } else {
+      const mediaGenres = await prisma.media_genre.findMany({
+        where: {
+          media_id: mediaId,
+        },
+      });
+
+      res.status(200).send(mediaGenres);
+    }
+  } catch (error) {
+    res.status(500).send({ error: error });
+  }
+};
+
+export const getMediaGenresByGenreId = async (req: Request, res: Response) => {
+  try {
+    const genreId = parseInt(req.params.genre_id);
+
+    if (!genreId) {
+      res.status(400).send({ error: "Genre ID is required" });
+    } else {
+      const mediaGenres = await prisma.media_genre.findMany({
+        where: {
+          genre_id: genreId,
+        },
+      });
+
+      res.status(200).send(mediaGenres);
+    }
+  } catch (error) {
+    res.status(500).send({ error: error });
+  }
+};
+
+export const getMediaGenresByAll = async (req: Request, res: Response) => {
+  try {
+    const mediaId = req.params.media_id;
+    const genreId = parseInt(req.params.genre_id);
+
+    if (!mediaId || isNaN(genreId)) {
+      res.status(400).send({ error: "Valid Media ID and Genre ID are required" });
+    }
+
+    const mediaGenre = await prisma.media_genre.findUnique({
+      where: {
+        media_id_genre_id: {
+          media_id: mediaId,
+          genre_id: genreId
+        }
+      },
       include: {
-        media: true,
         genre: true
       }
-    })
-    res.status(200).send(mediaGenres)
-  } catch(error) {
-    res.status(500).send({error: error})
-  }
-}
+    });
 
-export const createMediaGenre = async (req: Request, res: Response) => {
-    try {
-      const { mediaId, genreId } = req.body
-      
-      if (!mediaId || !genreId) res.status(400).send({error: "mediaId et genreId sont requis"})
-      
-      const mediaExists = await prisma.media.findUnique({
-        where: { id_media: mediaId }
-      })
-      
-      const genreExists = await prisma.genre.findUnique({
-        where: { id_genre: genreId }
-      })
-      
-      if (!mediaExists || !genreExists) res.status(404).send({error: "Média ou genre non trouvé"})
-      
-      const existingMediaGenre = await prisma.mediaGenre.findUnique({
-        where: {
-          mediaId_genreId: {
-            mediaId: mediaId,
-            genreId: genreId
-          }
-        }
-      })
-      
-      if (existingMediaGenre) res.status(409).send({error: "Cette association média-genre existe déjà"})
-      
-      const mediaGenre = await prisma.mediaGenre.create({
-        data: {
-          mediaId,
-          genreId
-        },
-        include: {
-          media: true,
-          genre: true
-        }
-      })
-      
-      res.status(201).send(mediaGenre)
-    } catch(error) {
-      res.status(500).send({error: error})
+    if (!mediaGenre) {
+      res.status(404).send({ error: "MediaGenre not found" });
     }
-  }
 
-  export const deleteMediaGenre = async (req: Request, res: Response) => {
-    try {
-      const { mediaId, genreId } = req.params
-      
-      const mediaGenre = await prisma.mediaGenre.delete({
-        where: {
-          mediaId_genreId: {
-            mediaId: parseInt(mediaId),
-            genreId: parseInt(genreId)
-          }
-        }
-      })
-      
-      res.status(200).send(mediaGenre)
-    } catch(error) {
-      res.status(500).send({error: error})
-    }
+    res.status(200).send(mediaGenre);
+  } catch (error: any) {
+    res.status(500).send({ error: error.message });
   }
+};

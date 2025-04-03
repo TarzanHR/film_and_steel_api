@@ -1,420 +1,304 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
   try {
-    // Nettoyage de la base de données
-    await prisma.ecrivain.deleteMany()
-    await prisma.directeur.deleteMany()
-    await prisma.crew.deleteMany()
-    await prisma.connuPour.deleteMany()
-    await prisma.principal.deleteMany()
-    await prisma.mediaGenre.deleteMany()
-    await prisma.mediaCategorie.deleteMany()
-    await prisma.episode.deleteMany()
-    await prisma.rating.deleteMany()
-    await prisma.aka.deleteMany()
-    await prisma.media.deleteMany()
-    await prisma.personne.deleteMany()
-    await prisma.genre.deleteMany()
-    await prisma.categorie.deleteMany()
+    // Création des catégories
+    const categoriesData = [
+      { cat_id: 1, cat_name: "Film" },
+      { cat_id: 2, cat_name: "Série TV" },
+      { cat_id: 3, cat_name: "Documentaire" },
+    ];
 
-    // Réinitialisation des séquences SQLite
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Categorie'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Genre'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Personne'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Media'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Rating'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Aka'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Crew'`
-    await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Episode'`
+    for (const cat of categoriesData) {
+      await prisma.categories.upsert({
+        where: { cat_id: cat.cat_id },
+        update: {},
+        create: cat,
+      });
+    }
+    console.log("Catégories créées");
 
-    console.log('Nettoyage terminé')
+    // Création des genres
+    const genresData = [
+      { genre_id: 1, genre_name: "Action" },
+      { genre_id: 2, genre_name: "Comédie" },
+      { genre_id: 3, genre_name: "Drame" },
+      { genre_id: 4, genre_name: "Science-Fiction" },
+    ];
 
-    // 1. Création des catégories
-    const categories = await Promise.all([
-      prisma.categorie.create({
-        data: { nom_categorie: 'Film' }
-      }),
-      prisma.categorie.create({
-        data: { nom_categorie: 'Série TV' }
-      }),
-      prisma.categorie.create({
-        data: { nom_categorie: 'Documentaire' }
-      })
-    ])
-    
-    const filmCategorie = categories[0]
-    const serieCategorie = categories[1]
-    const documentaireCategorie = categories[2]
-    
-    console.log('Catégories créées:', categories.map(c => c.nom_categorie))
+    for (const genre of genresData) {
+      await prisma.genre.upsert({
+        where: { genre_id: genre.genre_id },
+        update: {},
+        create: genre,
+      });
+    }
+    console.log("Genres créés");
 
-    // 2. Création des genres
-    const genres = await Promise.all([
-      prisma.genre.create({
-        data: { nom_genre: 'Action' }
-      }),
-      prisma.genre.create({
-        data: { nom_genre: 'Comédie' }
-      }),
-      prisma.genre.create({
-        data: { nom_genre: 'Drame' }
-      }),
-      prisma.genre.create({
-        data: { nom_genre: 'Science-Fiction' }
-      })
-    ])
-    
-    const actionGenre = genres[0]
-    const comedieGenre = genres[1]
-    const dramaGenre = genres[2]
-    const sciFiGenre = genres[3]
-    
-    console.log('Genres créés:', genres.map(g => g.nom_genre))
-
-    // 3. Création des personnes
-    const personnes = await Promise.all([
-      prisma.personne.create({
-        data: {
-          primary_name: 'Steven Spielberg',
-          birth_year: 1946,
-          profession: 'Réalisateur, Producteur, Scénariste'
-        }
-      }),
-      prisma.personne.create({
-        data: {
-          primary_name: 'Tom Hanks',
-          birth_year: 1956,
-          profession: 'Acteur, Producteur'
-        }
-      }),
-      prisma.personne.create({
-        data: {
-          primary_name: 'Christopher Nolan',
-          birth_year: 1970,
-          profession: 'Réalisateur, Scénariste, Producteur'
-        }
-      }),
-      prisma.personne.create({
-        data: {
-          primary_name: 'Scarlett Johansson',
-          birth_year: 1984,
-          profession: 'Actrice'
-        }
-      })
-    ])
-    
-    const spielberg = personnes[0]
-    const hanks = personnes[1]
-    const nolan = personnes[2]
-    const johansson = personnes[3]
-    
-    console.log('Personnes créées:', personnes.map(p => p.primary_name))
-
-    // 4. Création des médias
-    const inception = await prisma.media.create({
-      data: {
-        titleType: 'movie',
-        primaryTitle: 'Inception',
-        originalTitle: 'Inception',
-        isAdult: false,
-        startYear: 2010,
-        runtimeMinutes: 148,
-      }
-    })
-
-    const savingPrivateRyan = await prisma.media.create({
-      data: {
-        titleType: 'movie',
-        primaryTitle: 'Il faut sauver le soldat Ryan',
-        originalTitle: 'Saving Private Ryan',
-        isAdult: false,
-        startYear: 1998,
-        runtimeMinutes: 169,
-      }
-    })
-
-    const breakingBad = await prisma.media.create({
-      data: {
-        titleType: 'tvSeries',
-        primaryTitle: 'Breaking Bad',
-        originalTitle: 'Breaking Bad',
-        isAdult: false,
+    // Création des médias
+    const mediasData = [
+      {
+        media_id: "tt0816692",
+        primaryTitle: "Interstellar",
+        isAdult: 0,
+        startYear: 2014,
+        runtimeMinutes: "169",
+      },
+      {
+        media_id: "tt0111161",
+        primaryTitle: "Les Évadés",
+        isAdult: 0,
+        startYear: 1994,
+        runtimeMinutes: "142",
+      },
+      {
+        media_id: "tt0903747",
+        primaryTitle: "Breaking Bad",
+        isAdult: 0,
         startYear: 2008,
-        endYear: 2013,
-        runtimeMinutes: 45,
-      }
-    })
-    
-    console.log('Médias créés')
+        endYear: "2013",
+        runtimeMinutes: "49",
+      },
+    ];
 
-    // 5. Création des crews
-    const inceptionCrew = await prisma.crew.create({ data: {} })
-    const savingPrivateRyanCrew = await prisma.crew.create({ data: {} })
+    for (const media of mediasData) {
+      await prisma.media.upsert({
+        where: { media_id: media.media_id },
+        update: {},
+        create: media,
+      });
+    }
+    console.log("Médias créés");
 
-    // 6. Association des catégories aux médias
-    await prisma.mediaCategorie.create({
-      data: {
-        mediaId: inception.id_media,
-        categorieId: filmCategorie.id_categorie
-      }
-    })
+    // Création des personnes
+    const personnesData = [
+      {
+        perso_id: "nm0000138",
+        primaryName: "Christopher Nolan",
+        birthYear: "1970",
+        primaryProfession: "Director, Writer, Producer",
+      },
+      {
+        perso_id: "nm0000151",
+        primaryName: "Morgan Freeman",
+        birthYear: "1937",
+        primaryProfession: "Actor, Producer",
+      },
+      {
+        perso_id: "nm0186505",
+        primaryName: "Vince Gilligan",
+        birthYear: "1967",
+        primaryProfession: "Producer, Writer, Director",
+      },
+      {
+        perso_id: "nm0000190",
+        primaryName: "Matthew McConaughey",
+        birthYear: "1969",
+        primaryProfession: "Actor, Producer",
+      },
+    ];
 
-    await prisma.mediaCategorie.create({
-      data: {
-        mediaId: savingPrivateRyan.id_media,
-        categorieId: filmCategorie.id_categorie
-      }
-    })
+    for (const personne of personnesData) {
+      await prisma.personne.upsert({
+        where: { perso_id: personne.perso_id },
+        update: {},
+        create: personne,
+      });
+    }
+    console.log("Personnes créées");
 
-    await prisma.mediaCategorie.create({
-      data: {
-        mediaId: breakingBad.id_media,
-        categorieId: serieCategorie.id_categorie
-      }
-    })
-    
-    console.log('Associations médias-catégories créées')
+    // Créer les directeurs
+    await prisma.directeur.upsert({
+      where: { directeur_id: "nm0000138" },
+      update: {},
+      create: {
+        directeur_id: "nm0000138", // Christopher Nolan
+      },
+    });
 
-    // 7. Association des genres aux médias
-    await Promise.all([
-      // Inception: Action + SciFi
-      prisma.mediaGenre.create({
-        data: {
-          mediaId: inception.id_media,
-          genreId: actionGenre.id_genre
-        }
-      }),
-      prisma.mediaGenre.create({
-        data: {
-          mediaId: inception.id_media,
-          genreId: sciFiGenre.id_genre
-        }
-      }),
-      
-      // Saving Private Ryan: Action + Drama
-      prisma.mediaGenre.create({
-        data: {
-          mediaId: savingPrivateRyan.id_media,
-          genreId: actionGenre.id_genre
-        }
-      }),
-      prisma.mediaGenre.create({
-        data: {
-          mediaId: savingPrivateRyan.id_media,
-          genreId: dramaGenre.id_genre
-        }
-      }),
-      
-      // Breaking Bad: Drama
-      prisma.mediaGenre.create({
-        data: {
-          mediaId: breakingBad.id_media,
-          genreId: dramaGenre.id_genre
-        }
-      })
-    ])
-    
-    console.log('Associations médias-genres créées')
+    await prisma.directeur.upsert({
+      where: { directeur_id: "nm0186505" },
+      update: {},
+      create: {
+        directeur_id: "nm0186505", // Vince Gilligan
+      },
+    });
+    console.log("Directeurs créés");
 
-    // 8. Création des ratings
-    await Promise.all([
-      prisma.rating.create({
-        data: {
-          averageRating: 8.8,
-          numVotes: 2200000,
-          mediaId: inception.id_media
-        }
-      }),
-      prisma.rating.create({
-        data: {
-          averageRating: 8.6,
-          numVotes: 1300000,
-          mediaId: savingPrivateRyan.id_media
-        }
-      }),
-      prisma.rating.create({
-        data: {
-          averageRating: 9.5,
-          numVotes: 1700000,
-          mediaId: breakingBad.id_media
-        }
-      })
-    ])
-    
-    console.log('Ratings créés')
+    // Créer les scénaristes
+    await prisma.scenariste.upsert({
+      where: { scenariste_id: "nm0000138" },
+      update: {},
+      create: {
+        scenariste_id: "nm0000138", // Christopher Nolan
+      },
+    });
 
-    // 9. Création des titres alternatifs (Aka)
-    await Promise.all([
-      prisma.aka.create({
-        data: {
-          ordering: 1,
-          title: 'Origem',
-          region: 'BR',
-          language: 'pt',
-          isOriginalTitle: false,
-          mediaId: inception.id_media
-        }
-      }),
-      prisma.aka.create({
-        data: {
-          ordering: 2,
-          title: 'Начало',
-          region: 'RU',
-          language: 'ru',
-          isOriginalTitle: false,
-          mediaId: inception.id_media
-        }
-      }),
-      prisma.aka.create({
-        data: {
-          ordering: 1,
-          title: 'Saving Private Ryan',
-          region: 'FR',
-          language: 'en',
-          isOriginalTitle: true,
-          mediaId: savingPrivateRyan.id_media
-        }
-      })
-    ])
-    
-    console.log('Titres alternatifs créés')
+    await prisma.scenariste.upsert({
+      where: { scenariste_id: "nm0186505" },
+      update: {},
+      create: {
+        scenariste_id: "nm0186505", // Vince Gilligan
+      },
+    });
+    console.log("Scénaristes créés");
 
-    // 10. Création des épisodes
-    await Promise.all([
-      prisma.episode.create({
-        data: {
-          seasonNumber: 1,
-          episodeNumber: 1,
-          parentTconst: 'tt0903747',
-          mediaId: breakingBad.id_media
-        }
-      }),
-      prisma.episode.create({
-        data: {
-          seasonNumber: 1,
-          episodeNumber: 2,
-          parentTconst: 'tt0903747',
-          mediaId: breakingBad.id_media
-        }
-      }),
-      prisma.episode.create({
-        data: {
-          seasonNumber: 5,
-          episodeNumber: 14,
-          parentTconst: 'tt0903747',
-          mediaId: breakingBad.id_media
-        }
-      })
-    ])
-    
-    console.log('Épisodes créés')
+    // Créer les crews
+    const crewsData = [
+      {
+        crew_id: 1,
+        media_id: "tt0816692",
+        directors: "nm0000138", // Christopher Nolan
+        writers: "nm0000138",
+      },
+      {
+        crew_id: 2,
+        media_id: "tt0903747",
+        directors: "nm0186505", // Vince Gilligan
+        writers: "nm0186505",
+      },
+    ];
 
-    // 11. Création des principaux
-    await Promise.all([
-      prisma.principal.create({
-        data: {
-          ordering: 1,
-          job: 'Director',
-          mediaId: inception.id_media,
-          personneId: nolan.id_name
-        }
-      }),
-      prisma.principal.create({
-        data: {
-          ordering: 1,
-          job: 'Director',
-          mediaId: savingPrivateRyan.id_media,
-          personneId: spielberg.id_name
-        }
-      }),
-      prisma.principal.create({
-        data: {
-          ordering: 2,
-          job: 'Actor',
-          characters: 'Captain Miller',
-          mediaId: savingPrivateRyan.id_media,
-          personneId: hanks.id_name
-        }
-      }),
-      prisma.principal.create({
-        data: {
-          ordering: 3,
-          job: 'Actress',
-          characters: 'Black Widow',
-          mediaId: inception.id_media,
-          personneId: johansson.id_name
-        }
-      })
-    ])
-    
-    console.log('Principaux créés')
+    for (const crew of crewsData) {
+      await prisma.crew.upsert({
+        where: { crew_id: crew.crew_id },
+        update: {},
+        create: crew,
+      });
+    }
+    console.log("Crews créés");
 
-    // 12. Création des directeurs
-    await Promise.all([
-      prisma.directeur.create({
-        data: {
-          crewId: inceptionCrew.id_crew,
-          personneId: nolan.id_name
-        }
-      }),
-      prisma.directeur.create({
-        data: {
-          crewId: savingPrivateRyanCrew.id_crew,
-          personneId: spielberg.id_name
-        }
-      })
-    ])
-    
-    console.log('Directeurs créés')
+    // Créer les relations média-genre
+    const mediaGenresData = [
+      { media_id: "tt0816692", genre_id: 4 }, // Interstellar - SciFi
+      { media_id: "tt0816692", genre_id: 3 }, // Interstellar - Drame
+      { media_id: "tt0111161", genre_id: 3 }, // Les Évadés - Drame
+      { media_id: "tt0903747", genre_id: 3 }, // Breaking Bad - Drame
+    ];
 
-    // 13. Création des écrivains
-    await prisma.ecrivain.create({
-      data: {
-        crewId: inceptionCrew.id_crew,
-        personneId: nolan.id_name
-      }
-    })
-    
-    console.log('Écrivains créés')
+    for (const mg of mediaGenresData) {
+      await prisma.media_genre.upsert({
+        where: {
+          media_id_genre_id: {
+            media_id: mg.media_id,
+            genre_id: mg.genre_id,
+          },
+        },
+        update: {},
+        create: mg,
+      });
+    }
+    console.log("Relations média-genre créées");
 
-    // 14. Création des "connu pour"
-    await Promise.all([
-      prisma.connuPour.create({
-        data: {
-          mediaId: inception.id_media,
-          personneId: nolan.id_name
-        }
-      }),
-      prisma.connuPour.create({
-        data: {
-          mediaId: savingPrivateRyan.id_media,
-          personneId: spielberg.id_name
-        }
-      }),
-      prisma.connuPour.create({
-        data: {
-          mediaId: savingPrivateRyan.id_media,
-          personneId: hanks.id_name
-        }
-      })
-    ])
-    
-    console.log('Relations "connu pour" créées')
+    // Créer les ratings
+    const ratingsData = [
+      {
+        rating_id: 1,
+        media_id: "tt0816692",
+        averageRating: 8.6,
+        numVotes: 1560000,
+      },
+      {
+        rating_id: 2,
+        media_id: "tt0111161",
+        averageRating: 9.3,
+        numVotes: 2400000,
+      },
+      {
+        rating_id: 3,
+        media_id: "tt0903747",
+        averageRating: 9.5,
+        numVotes: 1700000,
+      },
+    ];
 
-    console.log('La base de données a été initialisée avec succès.')
+    for (const rating of ratingsData) {
+      await prisma.rating.upsert({
+        where: { rating_id: rating.rating_id },
+        update: {},
+        create: rating,
+      });
+    }
+    console.log("Ratings créés");
+
+    // Créer les relations principal (acteur, réalisateur)
+    const principalsData = [
+      {
+        media_id: "tt0816692",
+        ordering: 1,
+        perso_id: "nm0000190", // McConaughey
+        cat_id: 1, // Film
+        job: "Actor",
+        characters: "Cooper",
+      },
+      {
+        media_id: "tt0816692",
+        ordering: 2,
+        perso_id: "nm0000138", // Nolan
+        cat_id: 1, // Film
+        job: "Director",
+      },
+      {
+        media_id: "tt0111161",
+        ordering: 1,
+        perso_id: "nm0000151", // Freeman
+        cat_id: 1, // Film
+        job: "Actor",
+        characters: 'Ellis Boyd "Red" Redding',
+      },
+      {
+        media_id: "tt0903747",
+        ordering: 1,
+        perso_id: "nm0186505", // Gilligan
+        cat_id: 2, // Série TV
+        job: "Creator, Producer",
+      },
+    ];
+
+    for (const principal of principalsData) {
+      await prisma.principal.upsert({
+        where: {
+          media_id_ordering_perso_id_cat_id: {
+            media_id: principal.media_id,
+            ordering: principal.ordering,
+            perso_id: principal.perso_id,
+            cat_id: principal.cat_id,
+          },
+        },
+        update: {},
+        create: principal,
+      });
+    }
+    console.log("Relations principal créées");
+
+    // Création d'un utilisateur admin
+    await prisma.mp_users.upsert({
+      where: { username: "admin" },
+      update: {},
+      create: {
+        username: "admin",
+        password:
+          "$2b$10$mG9LIcqHsZDezPjwgvHyuOUjn/vsH0.nWcFkQO89tJsYYbx7OkTLG", // hashé de 'admin123'
+        firstname: "Admin",
+        lastname: "User",
+        admin: 1,
+      },
+    });
+    console.log("Utilisateur admin créé");
+
+    console.log("Seed terminé avec succès");
   } catch (error) {
-    console.error('Erreur lors de l\'initialisation :', error)
+    console.error("Erreur lors du seed:", error);
   }
 }
 
 main()
   .catch((e) => {
-    console.error('Erreur non gérée :', e)
-    throw e
+    console.error("Erreur non gérée:", e);
+    throw e;
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

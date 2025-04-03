@@ -8,29 +8,34 @@ datasource db {
 }
 
 model categories {
-  cat_id   Int     @id
-  cat_name String?
+  cat_id    Int         @id
+  cat_name  String?
+  principal principal[]
 }
 
 model crew {
-  media_id  String?
-  directors String?
-  writers   String?
-  crew_id   Int     @id
+  media_id         String?
+  directors        String?
+  writers          String?
+  crew_id          Int                @id
+  crew_directeurs  crew_directeurs[]
+  crew_scenaristes crew_scenaristes[]
 }
 
 model genre {
-  genre_id   Int     @id
-  genre_name String?
+  genre_id    Int           @id
+  genre_name  String?
+  media_genre media_genre[]
 }
 
 model media {
-  media_id       String        @id
+  media_id       String        @id @default(dbgenerated("('tt'::text || nextval('media_id_seq'::regclass))"))
   primaryTitle   String?
   isAdult        Int?
   startYear      Int?
-  endYear        String?
   runtimeMinutes String?
+  image_url      String?
+  plot           String?
   media_genre    media_genre[]
   rating         rating[]
 }
@@ -38,17 +43,20 @@ model media {
 model media_genre {
   media_id String
   genre_id Int
+  genre    genre  @relation(fields: [genre_id], references: [genre_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_genre_id")
   media    media  @relation(fields: [media_id], references: [media_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([media_id, genre_id])
 }
 
 model personne {
-  perso_id          String  @id
+  perso_id          String      @id
   primaryName       String?
   birthYear         String?
   deathYear         String?
   primaryProfession String?
+  directeur         directeur?
+  scenariste        scenariste?
 }
 
 model principal {
@@ -58,6 +66,7 @@ model principal {
   cat_id     Int
   job        String?
   characters String?
+  categories categories @relation(fields: [cat_id], references: [cat_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cat_id")
 
   @@id([media_id, ordering, perso_id, cat_id])
 }
@@ -68,4 +77,53 @@ model rating {
   numVotes      Int?
   rating_id     Int     @id
   media         media?  @relation(fields: [media_id], references: [media_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model directeur {
+  directeur_id    String            @id
+  crew_directeurs crew_directeurs[]
+  personne        personne          @relation(fields: [directeur_id], references: [perso_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model media_deleted_log {
+  media_id   String?   @db.VarChar(50)
+  deleted_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@ignore
+}
+
+model mp_users {
+  rowid        Int      @id @default(autoincrement())
+  username     String   @unique(map: "unique_login") @db.VarChar(64)
+  password     String   @db.VarChar(255)
+  firstname    String   @db.VarChar(64)
+  lastname     String   @db.VarChar(64)
+  date_created DateTime @default(now()) @db.Timestamp(6)
+  date_updated DateTime @default(now()) @db.Timestamp(6)
+  admin        Int      @default(0) @db.SmallInt
+}
+
+model scenariste {
+  scenariste_id    String             @id
+  crew_scenaristes crew_scenaristes[]
+  personne         personne           @relation(fields: [scenariste_id], references: [perso_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model crew_scenaristes {
+  crew_id       Int
+  scenariste_id String
+  crew          crew       @relation(fields: [crew_id], references: [crew_id], onDelete: NoAction, onUpdate: NoAction)
+  scenariste    scenariste @relation(fields: [scenariste_id], references: [scenariste_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([crew_id, scenariste_id])
+}
+
+model crew_directeurs {
+  crew_id      Int
+  directeur_id String
+  crew         crew      @relation(fields: [crew_id], references: [crew_id], onDelete: NoAction, onUpdate: NoAction)
+  directeur    directeur @relation(fields: [directeur_id], references: [directeur_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([crew_id, directeur_id])
 }
