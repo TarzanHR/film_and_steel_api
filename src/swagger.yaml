@@ -1,114 +1,2115 @@
 openapi: 3.0.0
 info:
-  title: Pokémon TCG API
-  description: API for managing Pokémon cards, users, attacks, and decks
+  title: Media Database API
+  description: API for managing media (movies, TV series, etc.), genres, ratings, and people involved in media production
   version: 1.0.0
 servers:
+  - url: http://62.72.18.63:11043
+    description: Production server
   - url: http://localhost:3000
-paths:
-  /users:
-    post:
-      summary: Create a new user
-      requestBody:
-        description: User data to be created
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-      responses:
-        201:
-          description: User created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  email:
-                    type: string
-        500:
-          description: Failed to create user
+    description: Development server
 
-  /users/login:
+tags:
+  - name: Media
+    description: Media operations
+  - name: Genre
+    description: Genre operations
+  - name: Rating
+    description: Rating operations
+  - name: Categories
+    description: Categories operations
+  - name: Personne
+    description: Person operations
+  - name: Crew
+    description: Crew operations
+  - name: Principal
+    description: Principal operations
+  - name: MediaGenre
+    description: Media-Genre relation operations
+  - name: Directeur
+    description: Director operations
+  - name: Scenariste
+    description: Writer operations
+  - name: CrewScenariste
+    description: Crew-Writer relation operations
+  - name: CrewDirecteur
+    description: Crew-Director relation operations
+
+paths:
+  #
+  # MEDIA ROUTES
+  #
+  /medias:
+    get:
+      summary: Get all media
+      tags:
+        - Media
+      responses:
+        '200':
+          description: A list of all media
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Media'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
-      summary: User login
+      summary: Create a new media
+      tags:
+        - Media
       requestBody:
-        description: Login credentials (email & password)
         required: true
         content:
           application/json:
             schema:
               type: object
               required:
-                - email
-                - password
+                - primaryTitle
+                - genres
               properties:
-                email:
+                primaryTitle:
                   type: string
-                password:
+                  description: The primary title of the media
+                isAdult:
+                  type: integer
+                  enum: [0, 1]
+                  description: Indicates if the media is for adults (1) or not (0)
+                startYear:
+                  type: integer
+                  description: The year when the media was released
+                runtimeMinutes:
                   type: string
+                  description: The runtime in minutes
+                image_url:
+                  type: string
+                  description: URL to the media image
+                plot:
+                  type: string
+                  description: Short description of the media
+                genres:
+                  type: array
+                  description: Array of genre IDs
+                  items:
+                    type: integer
       responses:
-        200:
-          description: Login successful, returns JWT token
+        '201':
+          description: Media created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      email:
-                        type: string
-                  message:
-                    type: string
-        401:
-          description: Invalid credentials
-        500:
-          description: Failed to login
-  /users/{userId}:
+                $ref: '#/components/schemas/Media'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /medias/id/{media_id}:
     get:
-      summary: Get a user by ID
-      security:
-        - bearerAuth: []
+      summary: Get media by ID
+      tags:
+        - Media
       parameters:
-        - in: path
-          name: userId
+        - name: media_id
+          in: path
           required: true
+          description: Media ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /medias/name/{primaryTitle}:
+    get:
+      summary: Get media by primary title
+      tags:
+        - Media
+      parameters:
+        - name: primaryTitle
+          in: path
+          required: true
+          description: Primary title
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media information
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Media'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /medias/{media_id}:
+    patch:
+      summary: Update media
+      tags:
+        - Media
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                primaryTitle:
+                  type: string
+                isAdult:
+                  type: integer
+                  enum: [0, 1]
+                startYear:
+                  type: integer
+                runtimeMinutes:
+                  type: string
+                plot:
+                  type: string
+                genres:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Media updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete media
+      tags:
+        - Media
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Media deleted successfully
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # GENRE ROUTES
+  #
+  /genres:
+    get:
+      summary: Get all genres
+      tags:
+        - Genre
+      responses:
+        '200':
+          description: A list of all genres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new genre
+      tags:
+        - Genre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_name
+              properties:
+                genre_id:
+                  type: integer
+                  description: Optional ID for the genre
+                genre_name:
+                  type: string
+                  description: The name of the genre
+      responses:
+        '201':
+          description: Genre created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /genre/id/{genre_id}:
+    get:
+      summary: Get genre by ID
+      tags:
+        - Genre
+      parameters:
+        - name: genre_id
+          in: path
+          required: true
+          description: Genre ID
           schema:
             type: integer
       responses:
-        200:
-          description: The user details
+        '200':
+          description: Genre information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /genre/name/{genre_name}:
+    get:
+      summary: Get genre by name
+      tags:
+        - Genre
+      parameters:
+        - name: genre_name
+          in: path
+          required: true
+          description: Genre name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Genre information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /genres/{genre_id}:
+    patch:
+      summary: Update genre
+      tags:
+        - Genre
+      parameters:
+        - name: genre_id
+          in: path
+          required: true
+          description: Genre ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_name
+              properties:
+                genre_name:
+                  type: string
+                  description: The name of the genre
+      responses:
+        '200':
+          description: Genre updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete genre
+      tags:
+        - Genre
+      parameters:
+        - name: genre_id
+          in: path
+          required: true
+          description: Genre ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Genre deleted successfully
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  #
+  # RATING ROUTES
+  #
+  /ratings:
+    get:
+      summary: Get all ratings
+      tags:
+        - Rating
+      responses:
+        '200':
+          description: A list of all ratings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rating'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new rating
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - media_id
+              properties:
+                media_id:
+                  type: string
+                  description: Media ID
+                averageRating:
+                  type: number
+                  format: float
+                  description: Average rating
+                numVotes:
+                  type: integer
+                  description: Number of votes
+      responses:
+        '201':
+          description: Rating created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /ratings/{rating_id}:
+    get:
+      summary: Get rating by ID
+      tags:
+        - Rating
+      parameters:
+        - name: rating_id
+          in: path
+          required: true
+          description: Rating ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Rating information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Update rating
+      tags:
+        - Rating
+      parameters:
+        - name: rating_id
+          in: path
+          required: true
+          description: Rating ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_id:
+                  type: string
+                  description: Media ID
+                averageRating:
+                  type: number
+                  format: float
+                  description: Average rating
+                numVotes:
+                  type: integer
+                  description: Number of votes
+      responses:
+        '200':
+          description: Rating updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete rating
+      tags:
+        - Rating
+      parameters:
+        - name: rating_id
+          in: path
+          required: true
+          description: Rating ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Rating deleted successfully
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  #
+  # CATEGORIES ROUTES
+  #
+  /categories:
+    get:
+      summary: Get all categories
+      tags:
+        - Categories
+      responses:
+        '200':
+          description: A list of all categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new category
+      tags:
+        - Categories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cat_name
+              properties:
+                cat_name:
+                  type: string
+                  description: The name of the category
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /categories/id/{cat_id}:
+    get:
+      summary: Get category by ID
+      tags:
+        - Categories
+      parameters:
+        - name: cat_id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /categories/name/{cat_name}:
+    get:
+      summary: Get category by name
+      tags:
+        - Categories
+      parameters:
+        - name: cat_name
+          in: path
+          required: true
+          description: Category name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /categories/{cat_id}:
+    patch:
+      summary: Update category
+      tags:
+        - Categories
+      parameters:
+        - name: cat_id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cat_name
+              properties:
+                cat_name:
+                  type: string
+                  description: The name of the category
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete category
+      tags:
+        - Categories
+      parameters:
+        - name: cat_id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Category deleted successfully
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Cannot delete category (used by principals)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # PERSONNE ROUTES
+  #
+  /personnes:
+    get:
+      summary: Get all people
+      tags:
+        - Personne
+      responses:
+        '200':
+          description: A list of all people
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Personne'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new person
+      tags:
+        - Personne
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - primaryName
+                - roles
+              properties:
+                primaryName:
+                  type: string
+                  description: The name of the person
+                birthYear:
+                  type: string
+                  description: Year of birth
+                deathYear:
+                  type: string
+                  description: Year of death
+                primaryProfession:
+                  type: string
+                  description: Primary profession
+                roles:
+                  type: array
+                  description: Roles (directeur, scenariste)
+                  items:
+                    type: string
+                    enum: [directeur, scenariste]
+      responses:
+        '201':
+          description: Person created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /personnes/id/{perso_id}:
+    get:
+      summary: Get person by ID
+      tags:
+        - Personne
+      parameters:
+        - name: perso_id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Person information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+        '404':
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /personnes/name/{perso_name}:
+    get:
+      summary: Get person by name
+      tags:
+        - Personne
+      parameters:
+        - name: perso_name
+          in: path
+          required: true
+          description: Person name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Person information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+        '404':
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /personnes/{perso_id}:
+    patch:
+      summary: Update person
+      tags:
+        - Personne
+      parameters:
+        - name: perso_id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                primaryName:
+                  type: string
+                birthYear:
+                  type: string
+                deathYear:
+                  type: string
+                primaryProfession:
+                  type: string
+                roles:
+                  type: array
+                  items:
+                    type: string
+                    enum: [directeur, scenariste]
+      responses:
+        '200':
+          description: Person updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personne'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete person
+      tags:
+        - Personne
+      parameters:
+        - name: perso_id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Person deleted successfully
+        '404':
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # CREW ROUTES
+  #
+  /crews:
+    get:
+      summary: Get all crews
+      tags:
+        - Crew
+      responses:
+        '200':
+          description: A list of all crews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Crew'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new crew
+      tags:
+        - Crew
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - media_id
+              properties:
+                media_id:
+                  type: string
+                  description: Media ID
+                directors:
+                  type: string
+                  description: Directors IDs (comma-separated)
+                writers:
+                  type: string
+                  description: Writers IDs (comma-separated)
+                crew_id:
+                  type: integer
+                  description: Optional crew ID
+      responses:
+        '201':
+          description: Crew created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crew'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /crews/id/{crew_id}:
+    get:
+      summary: Get crew by ID
+      tags:
+        - Crew
+      parameters:
+        - name: crew_id
+          in: path
+          required: true
+          description: Crew ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Crew information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crew'
+        '404':
+          description: Crew not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # PRINCIPAL ROUTES
+  #
+  /principales:
+    get:
+      summary: Get all principals
+      tags:
+        - Principal
+      responses:
+        '200':
+          description: A list of all principals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Principal'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new principal
+      tags:
+        - Principal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - media_id
+                - perso_id
+                - cat_id
+                - ordering
+              properties:
+                media_id:
+                  type: string
+                  description: Media ID
+                perso_id:
+                  type: string
+                  description: Person ID
+                cat_id:
+                  type: integer
+                  description: Category ID
+                ordering:
+                  type: integer
+                  description: Ordering
+                job:
+                  type: string
+                  description: Job
+                characters:
+                  type: string
+                  description: Characters played
+      responses:
+        '201':
+          description: Principal created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Principal'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Media, Person, or Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: This principal relationship already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /principales/media/{media_id}:
+    get:
+      summary: Get principals by media ID
+      tags:
+        - Principal
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of principals for the media
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Principal'
+        '404':
+          description: No principals found for the given media ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /principales/personne/{perso_id}:
+    get:
+      summary: Get principals by person ID
+      tags:
+        - Principal
+      parameters:
+        - name: perso_id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of principals for the person
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Principal'
+        '404':
+          description: No principals found for the given person ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /principales/{media_id}/{perso_id}:
+    patch:
+      summary: Update principal
+      tags:
+        - Principal
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+        - name: perso_id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ordering:
+                  type: integer
+                  description: Ordering
+                job:
+                  type: string
+                  description: Job
+                characters:
+                  type: string
+                  description: Characters played
+                cat_id:
+                  type: integer
+                  description: Category ID
+      responses:
+        '200':
+          description: Principal updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Principal'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Principal relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete principal
+      tags:
+        - Principal
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+        - name: perso_id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Principal deleted successfully
+        '404':
+          description: Principal relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  #
+  # MEDIAGENRE ROUTES
+  #
+  /mediaGenres:
+    get:
+      summary: Get all media-genre relationships
+      tags:
+        - MediaGenre
+      responses:
+        '200':
+          description: A list of all media-genre relationships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaGenre'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /mediaGenres/media/{media_id}:
+    get:
+      summary: Get media-genre relationships by media ID
+      tags:
+        - MediaGenre
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of media-genre relationships for the media
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaGenre'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /mediaGenres/genre/{genre_id}:
+    get:
+      summary: Get media-genre relationships by genre ID
+      tags:
+        - MediaGenre
+      parameters:
+        - name: genre_id
+          in: path
+          required: true
+          description: Genre ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of media-genre relationships for the genre
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaGenre'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /mediaGenres/{media_id}/{genre_id}:
+    get:
+      summary: Get media-genre relationship by media ID and genre ID
+      tags:
+        - MediaGenre
+      parameters:
+        - name: media_id
+          in: path
+          required: true
+          description: Media ID
+          schema:
+            type: string
+        - name: genre_id
+          in: path
+          required: true
+          description: Genre ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The media-genre relationship
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaGenre'
+        '404':
+          description: MediaGenre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # DIRECTEUR ROUTES
+  #
+  /directeurs:
+    get:
+      summary: Get all directors
+      tags:
+        - Directeur
+      responses:
+        '200':
+          description: A list of all directors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Directeur'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /directeurs/id/{directeur_id}:
+    get:
+      summary: Get director by ID
+      tags:
+        - Directeur
+      parameters:
+        - name: directeur_id
+          in: path
+          required: true
+          description: Director ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Director information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Directeur'
+        '404':
+          description: Director not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /directeurs/name/{perso_name}:
+    get:
+      summary: Get director by name
+      tags:
+        - Directeur
+      parameters:
+        - name: perso_name
+          in: path
+          required: true
+          description: Person name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Director information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Directeur'
+        '404':
+          description: Director not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # SCENARISTE ROUTES
+  #
+  /scenaristes:
+    get:
+      summary: Get all writers
+      tags:
+        - Scenariste
+      responses:
+        '200':
+          description: A list of all writers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scenariste'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /scenaristes/id/{scenariste_id}:
+    get:
+      summary: Get writer by ID
+      tags:
+        - Scenariste
+      parameters:
+        - name: scenariste_id
+          in: path
+          required: true
+          description: Writer ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Writer information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenariste'
+        '404':
+          description: Writer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /scenaristes/name/{perso_name}:
+    get:
+      summary: Get writer by name
+      tags:
+        - Scenariste
+      parameters:
+        - name: perso_name
+          in: path
+          required: true
+          description: Person name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Writer information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenariste'
+        '404':
+          description: Writer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # CREW_SCENARISTE ROUTES
+  #
+  /crew_scenaristes:
+    get:
+      summary: Get all crew-writer relationships
+      tags:
+        - CrewScenariste
+      responses:
+        '200':
+          description: A list of all crew-writer relationships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CrewScenariste'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /crew_scenariste/scenariste/{scenariste_id}:
+    get:
+      summary: Get crews by writer ID
+      tags:
+        - CrewScenariste
+      parameters:
+        - name: scenariste_id
+          in: path
+          required: true
+          description: Writer ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Crews for the writer
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-                  email:
-                    type: string
-        404:
-          description: User not found
+                  scenariste:
+                    $ref: '#/components/schemas/Scenariste'
+                  crews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Crew'
+        '404':
+          description: No crew associations found for this writer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /crew_scenariste/crew/{crew_id}:
+    get:
+      summary: Get writers by crew ID
+      tags:
+        - CrewScenariste
+      parameters:
+        - name: crew_id
+          in: path
+          required: true
+          description: Crew ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Writers for the crew
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  crew:
+                    $ref: '#/components/schemas/Crew'
+                  scenaristes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Scenariste'
+        '404':
+          description: No writers found for this crew
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # CREW_DIRECTEUR ROUTES
+  #
+  /crew_directeurs:
+    get:
+      summary: Get all crew-director relationships
+      tags:
+        - CrewDirecteur
+      responses:
+        '200':
+          description: A list of all crew-director relationships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CrewDirecteur'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /crew_directeurs/directeur/{directeur_id}:
+    get:
+      summary: Get crews by director ID
+      tags:
+        - CrewDirecteur
+      parameters:
+        - name: directeur_id
+          in: path
+          required: true
+          description: Director ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Crews for the director
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  directeur:
+                    $ref: '#/components/schemas/Directeur'
+                  crews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Crew'
+        '404':
+          description: No crew associations found for this director
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /crew_directeurs/crew/{crew_id}:
+    get:
+      summary: Get directors by crew ID
+      tags:
+        - CrewDirecteur
+      parameters:
+        - name: crew_id
+          in: path
+          required: true
+          description: Crew ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Directors for the crew
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  crew:
+                    $ref: '#/components/schemas/Crew'
+                  directeurs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Directeur'
+        '404':
+          description: No directors found for this crew
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+  schemas:
+    Media:
+      type: object
+      properties:
+        media_id:
+          type: string
+        primaryTitle:
+          type: string
+        isAdult:
+          type: integer
+        startYear:
+          type: integer
+        runtimeMinutes:
+          type: string
+        image_url:
+          type: string
+        plot:
+          type: string
+        media_genre:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaGenre'
+        rating:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rating'
+    
+    Genre:
+      type: object
+      properties:
+        genre_id:
+          type: integer
+        genre_name:
+          type: string
+    
+    Rating:
+      type: object
+      properties:
+        rating_id:
+          type: integer
+        media_id:
+          type: string
+        averageRating:
+          type: number
+          format: float
+        numVotes:
+          type: integer
+    
+    Category:
+      type: object
+      properties:
+        cat_id:
+          type: integer
+        cat_name:
+          type: string
+    
+    Personne:
+      type: object
+      properties:
+        perso_id:
+          type: string
+        primaryName:
+          type: string
+        birthYear:
+          type: string
+        deathYear:
+          type: string
+        primaryProfession:
+          type: string
+        directeur:
+          $ref: '#/components/schemas/Directeur'
+        scenariste:
+          $ref: '#/components/schemas/Scenariste'
+    
+    Crew:
+      type: object
+      properties:
+        crew_id:
+          type: integer
+        media_id:
+          type: string
+        directors:
+          type: string
+        writers:
+          type: string
+        crew_directeurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewDirecteur'
+        crew_scenaristes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewScenariste'
+    
+    Principal:
+      type: object
+      properties:
+        media_id:
+          type: string
+        ordering:
+          type: integer
+        perso_id:
+          type: string
+        cat_id:
+          type: integer
+        job:
+          type: string
+        characters:
+          type: string
+        categories:
+          $ref: '#/components/schemas/Category'
+    
+    MediaGenre:
+      type: object
+      properties:
+        media_id:
+          type: string
+        genre_id:
+          type: integer
+        genre:
+          $ref: '#/components/schemas/Genre'
+    
+    Directeur:
+      type: object
+      properties:
+        directeur_id:
+          type: string
+        personne:
+          $ref: '#/components/schemas/Personne'
+    
+    Scenariste:
+      type: object
+      properties:
+        scenariste_id:
+          type: string
+        personne:
+          $ref: '#/components/schemas/Personne'
+    
+    CrewScenariste:
+      type: object
+      properties:
+        crew_id:
+          type: integer
+        scenariste_id:
+          type: string
+        crew:
+          $ref: '#/components/schemas/Crew'
+        scenariste:
+          $ref: '#/components/schemas/Scenariste'
+    
+    CrewDirecteur:
+      type: object
+      properties:
+        crew_id:
+          type: integer
+        directeur_id:
+          type: string
+        crew:
+          $ref: '#/components/schemas/Crew'
+        directeur:
+          $ref: '#/components/schemas/Directeur'
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message

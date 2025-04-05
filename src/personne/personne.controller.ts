@@ -61,39 +61,47 @@ export const createPersonne = async (req: Request, res: Response) => {
   try {
     const { primaryName, birthYear, deathYear, primaryProfession, roles } = req.body;
 
-    // Convertir \\N en null
-    const personneData = {
-      primaryName,
-      birthYear: birthYear === "\\N" ? null : birthYear,
-      deathYear: deathYear === "\\N" ? null : deathYear,
-      primaryProfession,
-    };
-
-    // Créer d'abord une entrée dans la table personne
-    const personne = await prisma.personne.create({
-      data: personneData,
-    });
-
-    if (roles && Array.isArray(roles)) {
-      if (roles.includes('directeur')) {
-        await prisma.directeur.create({
-          data: {
-            directeur_id: personne.perso_id,
-          },
-        });
-      }
-      if (roles.includes('scenariste')) {
-        await prisma.scenariste.create({
-          data: {
-            scenariste_id: personne.perso_id,
-          },
-        });
-      }
+    if (!primaryName) {
+      res.status(400).send({ error: "Primary name is required" });
+    } else if (!roles || !Array.isArray(roles) || roles.length === 0) {
+      res.status(400).send({ error: "At least one role is required" });
     } else {
-      res.status(400).send({ error: "No valid roles specified" });
-    }
+      const personneData = {
+        primaryName,
+        birthYear: birthYear === "\\N" ? null : birthYear,
+        deathYear: deathYear === "\\N" ? null : deathYear,
+        primaryProfession,
+      };
 
-    res.status(201).send(personne);
+      const personne = await prisma.personne.create({
+        data: personneData,
+      });
+
+      // Créer les rôles associés
+      const rolePromises = [];
+      if (roles.includes('directeur')) {
+        rolePromises.push(
+          prisma.directeur.create({
+            data: {
+              directeur_id: personne.perso_id,
+            },
+          })
+        );
+      }
+      
+      if (roles.includes('scenariste')) {
+        rolePromises.push(
+          prisma.scenariste.create({
+            data: {
+              scenariste_id: personne.perso_id,
+            },
+          })
+        );
+      }
+
+      await Promise.all(rolePromises);
+      res.status(201).send(personne);
+    }
   } catch (error) {
     res.status(500).send({ error: error });
   }
@@ -120,7 +128,6 @@ export const updatePersonne = async (req: Request, res: Response) => {
       if (!existingPersonne) {
         res.status(404).send({ error: "Person not found" });
       } else {
-        // Mettre à jour les informations de base de la personne
         const personne = await prisma.personne.update({
           where: {
             perso_id: personneId,
@@ -133,7 +140,7 @@ export const updatePersonne = async (req: Request, res: Response) => {
           },
         });
 
-        // Gérer les rôles
+        // Gérer les rôles si fournis
         if (roles && Array.isArray(roles)) {
           if (existingPersonne.directeur && !roles.includes('directeur')) {
             await prisma.directeur.delete({
@@ -151,6 +158,7 @@ export const updatePersonne = async (req: Request, res: Response) => {
             });
           }
 
+          // Ajouter les nouveaux rôles
           if (roles.includes('directeur') && !existingPersonne.directeur) {
             await prisma.directeur.create({
               data: {

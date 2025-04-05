@@ -53,8 +53,8 @@ export const getPrincipalsByPersonneId = async (req: Request, res: Response) => 
         },
       });
 
-      if (principals.length === 0){
-        res.status(404).send({error: "No principals found for the given person ID"})
+      if (principals.length === 0) {
+        res.status(404).send({error: "No principals found for the given person ID"});
       } else {
         res.status(200).send(principals);
       }
@@ -106,9 +106,7 @@ export const createPrincipal = async (req: Request, res: Response) => {
             });
 
             if (existingPrincipal) {
-              res
-                .status(409)
-                .send({ error: "This principal relationship already exists" });
+              res.status(409).send({ error: "This principal relationship already exists" });
             } else {
               const principal = await prisma.principal.create({
                 data: {
@@ -177,9 +175,6 @@ export const updatePrincipal = async (req: Request, res: Response) => {
     res.status(500).send({ error: error });
   }
 };
-
-
-
 
 export const deletePrincipal = async (req: Request, res: Response) => {
   try {

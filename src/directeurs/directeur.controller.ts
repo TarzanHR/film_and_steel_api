@@ -27,9 +27,11 @@ export const getDirecteurById = async (req: Request, res: Response) => {
             }
         });
 
-        if (!directeur) res.status(404).json({ error: "Directeur not found" });
-
-        res.status(200).json(directeur);
+        if (!directeur) {
+            res.status(404).json({ error: "Directeur not found" });
+        } else {
+            res.status(200).json(directeur);
+        }
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
@@ -54,9 +56,11 @@ export const getDirecteurByName = async (req: Request, res: Response) => {
             }
         });
 
-        if (!directeur) res.status(404).json({ error: "Directeur not found" });
-
-        res.status(200).json(directeur);
+        if (!directeur) {
+            res.status(404).json({ error: "Directeur not found" });
+        } else {
+            res.status(200).json(directeur);
+        }
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }

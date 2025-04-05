@@ -24,7 +24,7 @@ export const getCategoryByName = async (req: Request, res: Response) => {
     });
 
     if (!categorie) {
-      res.status(404).send({ error: "Genre not found" });
+      res.status(404).send({ error: "Category not found" });
     } else {
       res.status(200).send(categorie);
     }
@@ -45,6 +45,7 @@ export const getCategoryById = async (req: Request, res: Response) => {
           cat_id: categoryId,
         },
       });
+      
       if (!category) {
         res.status(404).send({ error: "Category not found" });
       } else {

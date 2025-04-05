@@ -34,8 +34,8 @@ export const getMediaGenresByGenreId = async (req: Request, res: Response) => {
   try {
     const genreId = parseInt(req.params.genre_id);
 
-    if (!genreId) {
-      res.status(400).send({ error: "Genre ID is required" });
+    if (isNaN(genreId)) {
+      res.status(400).send({ error: "Valid Genre ID is required" });
     } else {
       const mediaGenres = await prisma.media_genre.findMany({
         where: {
@@ -57,25 +57,25 @@ export const getMediaGenresByAll = async (req: Request, res: Response) => {
 
     if (!mediaId || isNaN(genreId)) {
       res.status(400).send({ error: "Valid Media ID and Genre ID are required" });
-    }
-
-    const mediaGenre = await prisma.media_genre.findUnique({
-      where: {
-        media_id_genre_id: {
-          media_id: mediaId,
-          genre_id: genreId
+    } else {
+      const mediaGenre = await prisma.media_genre.findUnique({
+        where: {
+          media_id_genre_id: {
+            media_id: mediaId,
+            genre_id: genreId
+          }
+        },
+        include: {
+          genre: true
         }
-      },
-      include: {
-        genre: true
+      });
+
+      if (!mediaGenre) {
+        res.status(404).send({ error: "MediaGenre not found" });
+      } else {
+        res.status(200).send(mediaGenre);
       }
-    });
-
-    if (!mediaGenre) {
-      res.status(404).send({ error: "MediaGenre not found" });
     }
-
-    res.status(200).send(mediaGenre);
   } catch (error: any) {
     res.status(500).send({ error: error.message });
   }

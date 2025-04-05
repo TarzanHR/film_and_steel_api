@@ -93,26 +93,36 @@ export const updateRating = async (req: Request, res: Response) => {
 
       if (!existingRating) {
         res.status(404).send({ error: "Rating not found" });
-      } else {
-        if (media_id) {
-          const mediaExists = await prisma.media.findUnique({
+      } else if (media_id) {
+        const mediaExists = await prisma.media.findUnique({
+          where: {
+            media_id: media_id,
+          },
+        });
+
+        if (!mediaExists) {
+          res.status(404).send({ error: "Media not found" });
+        } else {
+          const rating = await prisma.rating.update({
             where: {
-              media_id: media_id,
+              rating_id: ratingId,
+            },
+            data: {
+              media_id,
+              averageRating,
+              numVotes,
             },
           });
 
-          if (!mediaExists) {
-            res.status(404).send({ error: "Media not found" });
-            return;
-          }
+          res.status(200).send(rating);
         }
-
+      } else {
+        // Cas où media_id n'est pas fourni
         const rating = await prisma.rating.update({
           where: {
             rating_id: ratingId,
           },
           data: {
-            media_id,
             averageRating,
             numVotes,
           },

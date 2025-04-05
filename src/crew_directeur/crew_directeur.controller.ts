@@ -37,44 +37,45 @@ export const getCrewsByDirecteur = async (req: Request, res: Response) => {
             }
         });
 
-        if (crewDirecteurs.length === 0) res.status(404).send({ error: "No crew associations found for this directeurs" });
+        if (crewDirecteurs.length === 0) {
+            res.status(404).send({ error: "No crew associations found for this directeur" });
+        } else {
+            const crewIds = crewDirecteurs.map(cd => cd.crew_id);
 
-        const crewIds = crewDirecteurs.map(cd => cd.crew_id);
-
-        const crews = await prisma.crew.findMany({
-            where: {
-                crew_id: {
-                    in: crewIds
-                }
-            },
-            include: {
-                crew_scenaristes: {
-                    include: {
-                        scenariste: {
-                            include: {
-                                personne: true
-                            }
-                        }
+            const crews = await prisma.crew.findMany({
+                where: {
+                    crew_id: {
+                        in: crewIds
                     }
                 },
-                crew_directeurs: {
-                    include: {
-                        directeur: {
-                            include: {
-                                personne: true
+                include: {
+                    crew_scenaristes: {
+                        include: {
+                            scenariste: {
+                                include: {
+                                    personne: true
+                                }
+                            }
+                        }
+                    },
+                    crew_directeurs: {
+                        include: {
+                            directeur: {
+                                include: {
+                                    personne: true
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
 
-        res.status(200).send({
-            directeur: crewDirecteurs[0]?.directeur,
-            crews: crews
-        });
+            res.status(200).send({
+                directeur: crewDirecteurs[0]?.directeur,
+                crews: crews
+            });
+        }
     } catch (error) {
-        console.error("Error in getCrewsByDirecteur:", error);
         res.status(500).send({ error: error });
     }
 };
@@ -83,39 +84,44 @@ export const getDirecteursByCrew = async (req: Request, res: Response) => {
     try {
         const crew_id = parseInt(req.params.crew_id);
 
-        if (isNaN(crew_id)) res.status(400).send({ error: "Crew ID must be a number" });
+        if (isNaN(crew_id)) {
+            res.status(400).send({ error: "Crew ID must be a number" });
+        } else {
+            const crew = await prisma.crew.findUnique({
+                where: {
+                    crew_id: crew_id
+                }
+            });
 
-        const crew = await prisma.crew.findUnique({
-            where: {
-                crew_id: crew_id
-            }
-        });
-
-        if (!crew) res.status(404).send({ error: "Crew not found" });
-
-        const crewDirecteurs = await prisma.crew_directeurs.findMany({
-            where: {
-                crew_id: crew_id
-            },
-            include: {
-                directeur: {
+            if (!crew) {
+                res.status(404).send({ error: "Crew not found" });
+            } else {
+                const crewDirecteurs = await prisma.crew_directeurs.findMany({
+                    where: {
+                        crew_id: crew_id
+                    },
                     include: {
-                        personne: true
+                        directeur: {
+                            include: {
+                                personne: true
+                            }
+                        }
                     }
+                });
+
+                if (crewDirecteurs.length === 0) {
+                    res.status(404).send({ error: "No directeurs found for this crew" });
+                } else {
+                    const directeurs = crewDirecteurs.map(cd => cd.directeur);
+
+                    res.status(200).send({
+                        crew: crew,
+                        directeurs: directeurs
+                    });
                 }
             }
-        });
-
-        if (crewDirecteurs.length === 0) res.status(404).send({ error: "No directeurs found for this crew" });
-
-        const directeurs = crewDirecteurs.map(cd => cd.directeur);
-
-        res.status(200).send({
-            crew: crew,
-            directeurs: directeurs
-        });
+        }
     } catch (error) {
-        console.error("Error in getDirecteursByCrew:", error);
         res.status(500).send({ error: error });
     }
 };

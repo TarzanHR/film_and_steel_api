@@ -22,6 +22,7 @@ export const getGenreById = async (req: Request, res: Response) => {
           genre_id: genreId,
         },
       });
+      
       if (!genre) {
         res.status(404).send({ error: "Genre not found" });
       } else {

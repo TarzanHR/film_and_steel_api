@@ -3,12 +3,12 @@ import prisma from "../client";
 
 export const getScenaristes = async (req: Request, res: Response) => {
     try {
-        const directeurs = await prisma.directeur.findMany({
+        const scenaristes = await prisma.scenariste.findMany({
             include: {
                 personne: true
             }
         });
-        res.status(200).send(directeurs);
+        res.status(200).send(scenaristes);
     } catch (error) {
         res.status(500).send({ error: error });
     }
@@ -27,9 +27,11 @@ export const getScenaristeById = async (req: Request, res: Response) => {
             }
         });
 
-        if (!scenariste) res.status(404).json({ error: "Scenariste not found" });
-
-        res.status(200).json(scenariste);
+        if (!scenariste) {
+            res.status(404).json({ error: "Scenariste not found" });
+        } else {
+            res.status(200).json(scenariste);
+        }
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
@@ -39,8 +41,6 @@ export const getScenaristeById = async (req: Request, res: Response) => {
 export const getScenaristeByName = async (req: Request, res: Response) => {
     try {
         const scenaristeName = String(req.params.perso_name);
-
-        console.log(scenaristeName);
 
         const scenariste = await prisma.scenariste.findFirst({
             where: {
@@ -56,9 +56,11 @@ export const getScenaristeByName = async (req: Request, res: Response) => {
             }
         });
 
-        if (!scenariste) res.status(404).json({ error: "Scenariste not found" });
-
-        res.status(200).json(scenariste);
+        if (!scenariste) {
+            res.status(404).json({ error: "Scenariste not found" });
+        } else {
+            res.status(200).json(scenariste);
+        }
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
