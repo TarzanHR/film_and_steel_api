@@ -4,7 +4,7 @@ import { getRating, getRatingById, createRating, updateRating, deleteRating } fr
 export const ratingRouter = Router()
 
 ratingRouter.get('/ratings', getRating)
-ratingRouter.get('/ratings/:id_rating', getRatingById)
+ratingRouter.get('/ratings/:rating_id', getRatingById)
 ratingRouter.post('/ratings', createRating)
-ratingRouter.patch('/ratings/:id_rating', updateRating)
-ratingRouter.delete('/ratings/:id_rating', deleteRating)
+ratingRouter.patch('/ratings/:rating_id', updateRating)
+ratingRouter.delete('/ratings/:rating_id', deleteRating)

@@ -44,7 +44,7 @@ export const getMediaByName = async (req: Request, res: Response) => {
 
     if (!mediaName) res.status(400).json({ error: "Primary title is required" });
 
-    const media = await prisma.media.findFirst({
+    const media = await prisma.media.findMany({
       where: {
         primaryTitle: {
           equals: mediaName,
@@ -57,7 +57,7 @@ export const getMediaByName = async (req: Request, res: Response) => {
       }
     });
 
-    if (!media) res.status(404).json({ error: "Media not found" });
+    if (media.length === 0) res.status(404).json({ error: "Media not found" });
 
     res.status(200).json(media);
   } catch (error: any) {

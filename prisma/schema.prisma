@@ -37,6 +37,7 @@ model media {
   image_url      String?
   plot           String?
   media_genre    media_genre[]
+  media_user     media_user[]
   rating         rating[]
 }
 
@@ -50,7 +51,7 @@ model media_genre {
 }
 
 model personne {
-  perso_id          String      @id
+  perso_id          String      @id @default(dbgenerated("('nm'::text || nextval('personne_id_seq'::regclass))"))
   primaryName       String?
   birthYear         String?
   deathYear         String?
@@ -94,14 +95,15 @@ model media_deleted_log {
 }
 
 model mp_users {
-  rowid        Int      @id @default(autoincrement())
-  username     String   @unique(map: "unique_login") @db.VarChar(64)
-  password     String   @db.VarChar(255)
-  firstname    String   @db.VarChar(64)
-  lastname     String   @db.VarChar(64)
-  date_created DateTime @default(now()) @db.Timestamp(6)
-  date_updated DateTime @default(now()) @db.Timestamp(6)
-  admin        Int      @default(0) @db.SmallInt
+  rowid        Int          @id @default(autoincrement())
+  username     String       @unique(map: "unique_login") @db.VarChar(64)
+  password     String       @db.VarChar(255)
+  firstname    String       @db.VarChar(64)
+  lastname     String       @db.VarChar(64)
+  date_created DateTime     @default(now()) @db.Timestamp(6)
+  date_updated DateTime     @default(now()) @db.Timestamp(6)
+  admin        Int          @default(0) @db.SmallInt
+  media_user   media_user[]
 }
 
 model scenariste {
@@ -126,4 +128,13 @@ model crew_directeurs {
   directeur    directeur @relation(fields: [directeur_id], references: [directeur_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([crew_id, directeur_id])
+}
+
+model media_user {
+  media_id String
+  rowid    Int
+  media    media    @relation(fields: [media_id], references: [media_id], onDelete: Cascade, onUpdate: NoAction)
+  mp_users mp_users @relation(fields: [rowid], references: [rowid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([media_id, rowid])
 }

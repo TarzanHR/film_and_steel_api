@@ -4,8 +4,8 @@ import { getPrincipals, getPrincipalsByMediaId, getPrincipalsByPersonneId, creat
 export const principaleRouter = Router()
 
 principaleRouter.get('/principales', getPrincipals)
-principaleRouter.get('/principales/:mediaId', getPrincipalsByMediaId)
-principaleRouter.get('/principales/:personneId', getPrincipalsByPersonneId)
+principaleRouter.get('/principales/media/:media_id', getPrincipalsByMediaId)
+principaleRouter.get('/principales/personne/:perso_id', getPrincipalsByPersonneId)
 principaleRouter.post('/principales', createPrincipal)
-principaleRouter.patch('/principales/:mediaId/:personneId', updatePrincipal)
-principaleRouter.delete('/principales/:mediaId/:personneId', deletePrincipal)
+principaleRouter.patch('/principales/:media_id/:perso_id', updatePrincipal)
+principaleRouter.delete('/principales/:media_id/:perso_id', deletePrincipal)

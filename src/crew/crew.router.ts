@@ -1,10 +1,8 @@
-// import { Router } from 'express'
-// import { getCrew, getCrewById, createCrew, updateCrew, deleteCrew } from './crew.controller'
+import { Router } from 'express'
+import { getCrews, getCrewById, createCrew } from './crew.controller'
 
-// export const crewRouter = Router()
+export const crewRouter = Router()
 
-// crewRouter.get('/crews', getCrew)
-// crewRouter.get('/crews/:id_crew', getCrewById)
-// crewRouter.post('/crews', createCrew)
-// crewRouter.patch('/crews/:id_crew', updateCrew)
-// crewRouter.delete('/crews/:id_crew', deleteCrew)
+crewRouter.get("/crews", getCrews);
+crewRouter.get("/crews/id/:crew_id", getCrewById)
+crewRouter.post("/crews", createCrew)

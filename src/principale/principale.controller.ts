@@ -18,22 +18,26 @@ export const getPrincipalsByMediaId = async (req: Request, res: Response) => {
       res.status(400).send({ error: "Media ID is required" });
     } else {
       const principals = await prisma.principal.findMany({
+        include: {
+          categories: true,
+        },
         where: {
           media_id: mediaId,
         },
       });
 
-      res.status(200).send(principals);
+      if (principals.length === 0) {
+        res.status(404).send({ error: "No principals found for the given media ID" });
+      } else {
+        res.status(200).send(principals);
+      }
     }
   } catch (error) {
     res.status(500).send({ error: error });
   }
 };
 
-export const getPrincipalsByPersonneId = async (
-  req: Request,
-  res: Response
-) => {
+export const getPrincipalsByPersonneId = async (req: Request, res: Response) => {
   try {
     const personneId = req.params.perso_id;
 
@@ -41,12 +45,19 @@ export const getPrincipalsByPersonneId = async (
       res.status(400).send({ error: "Person ID is required" });
     } else {
       const principals = await prisma.principal.findMany({
+        include: {
+          categories: true
+        },
         where: {
           perso_id: personneId,
         },
       });
 
-      res.status(200).send(principals);
+      if (principals.length === 0){
+        res.status(404).send({error: "No principals found for the given person ID"})
+      } else {
+        res.status(200).send(principals);
+      }
     }
   } catch (error) {
     res.status(500).send({ error: error });
@@ -62,7 +73,6 @@ export const createPrincipal = async (req: Request, res: Response) => {
         error: "media_id, perso_id, cat_id, and ordering are required",
       });
     } else {
-      // Vérifier que le média existe
       const mediaExists = await prisma.media.findUnique({
         where: { media_id: media_id },
       });
@@ -70,7 +80,6 @@ export const createPrincipal = async (req: Request, res: Response) => {
       if (!mediaExists) {
         res.status(404).send({ error: "Media not found" });
       } else {
-        // Vérifier que la personne existe
         const personneExists = await prisma.personne.findUnique({
           where: { perso_id: perso_id },
         });
@@ -78,7 +87,6 @@ export const createPrincipal = async (req: Request, res: Response) => {
         if (!personneExists) {
           res.status(404).send({ error: "Person not found" });
         } else {
-          // Vérifier que la catégorie existe
           const categorieExists = await prisma.categories.findUnique({
             where: { cat_id: parseInt(cat_id) },
           });
@@ -86,7 +94,6 @@ export const createPrincipal = async (req: Request, res: Response) => {
           if (!categorieExists) {
             res.status(404).send({ error: "Category not found" });
           } else {
-            // Vérifie si cette combinaison existe déjà
             const existingPrincipal = await prisma.principal.findUnique({
               where: {
                 media_id_ordering_perso_id_cat_id: {
@@ -127,42 +134,43 @@ export const createPrincipal = async (req: Request, res: Response) => {
 
 export const updatePrincipal = async (req: Request, res: Response) => {
   try {
-    const { media_id, ordering, perso_id, cat_id } = req.params;
-    const { job, characters } = req.body;
+    const { media_id, perso_id } = req.params;
+    const { ordering, job, characters, cat_id } = req.body;
 
-    if (!media_id || !ordering || !perso_id || !cat_id) {
-      res.status(400).send({ error: "All principal identifiers are required" });
+    if (!media_id || !perso_id) {
+      res.status(400).send({ error: "Media ID and Person ID are required" });
     } else {
-      const existingPrincipal = await prisma.principal.findUnique({
+      const existingPrincipal = await prisma.principal.findFirst({
         where: {
-          media_id_ordering_perso_id_cat_id: {
-            media_id: media_id,
-            ordering: parseInt(ordering),
-            perso_id: perso_id,
-            cat_id: parseInt(cat_id),
-          },
+          media_id: media_id,
+          perso_id: perso_id,
         },
       });
 
       if (!existingPrincipal) {
         res.status(404).send({ error: "Principal relationship not found" });
       } else {
-        const principal = await prisma.principal.update({
+        await prisma.principal.updateMany({
           where: {
-            media_id_ordering_perso_id_cat_id: {
-              media_id: media_id,
-              ordering: parseInt(ordering),
-              perso_id: perso_id,
-              cat_id: parseInt(cat_id),
-            },
+            media_id: media_id,
+            perso_id: perso_id,
           },
           data: {
-            job,
-            characters,
+            ordering: ordering !== undefined ? parseInt(ordering) : existingPrincipal.ordering,
+            job: job !== undefined ? job : existingPrincipal.job,
+            characters: characters !== undefined ? characters : existingPrincipal.characters,
+            cat_id: cat_id !== undefined ? parseInt(cat_id) : existingPrincipal.cat_id,
           },
         });
 
-        res.status(200).send(principal);
+        const updatedPrincipal = await prisma.principal.findFirst({
+          where: {
+            media_id: media_id,
+            perso_id: perso_id,
+          },
+        });
+
+        res.status(200).send(updatedPrincipal);
       }
     }
   } catch (error) {
@@ -170,35 +178,30 @@ export const updatePrincipal = async (req: Request, res: Response) => {
   }
 };
 
+
+
+
 export const deletePrincipal = async (req: Request, res: Response) => {
   try {
-    const { media_id, ordering, perso_id, cat_id } = req.params;
+    const { media_id, perso_id } = req.params;
 
-    if (!media_id || !ordering || !perso_id || !cat_id) {
-      res.status(400).send({ error: "All principal identifiers are required" });
+    if (!media_id || !perso_id) {
+      res.status(400).send({ error: "Media ID and Person ID are required" });
     } else {
-      const existingPrincipal = await prisma.principal.findUnique({
+      const existingPrincipal = await prisma.principal.findFirst({
         where: {
-          media_id_ordering_perso_id_cat_id: {
-            media_id: media_id,
-            ordering: parseInt(ordering),
-            perso_id: perso_id,
-            cat_id: parseInt(cat_id),
-          },
+          media_id: media_id,
+          perso_id: perso_id,
         },
       });
 
       if (!existingPrincipal) {
         res.status(404).send({ error: "Principal relationship not found" });
       } else {
-        await prisma.principal.delete({
+        await prisma.principal.deleteMany({
           where: {
-            media_id_ordering_perso_id_cat_id: {
-              media_id: media_id,
-              ordering: parseInt(ordering),
-              perso_id: perso_id,
-              cat_id: parseInt(cat_id),
-            },
+            media_id: media_id,
+            perso_id: perso_id,
           },
         });
 

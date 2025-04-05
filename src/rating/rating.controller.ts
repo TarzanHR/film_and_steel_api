@@ -44,7 +44,6 @@ export const createRating = async (req: Request, res: Response) => {
     if (!media_id) {
       res.status(400).send({ error: "Media ID is required" });
     } else {
-      // Vérifier si le média existe
       const mediaExists = await prisma.media.findUnique({
         where: {
           media_id: media_id,
@@ -54,7 +53,6 @@ export const createRating = async (req: Request, res: Response) => {
       if (!mediaExists) {
         res.status(404).send({ error: "Media not found" });
       } else {
-        // Déterminer le prochain rating_id
         const maxRating = await prisma.rating.findFirst({
           orderBy: {
             rating_id: "desc",
@@ -96,7 +94,6 @@ export const updateRating = async (req: Request, res: Response) => {
       if (!existingRating) {
         res.status(404).send({ error: "Rating not found" });
       } else {
-        // Si un media_id est fourni, vérifier que le média existe
         if (media_id) {
           const mediaExists = await prisma.media.findUnique({
             where: {
