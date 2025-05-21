@@ -11,6 +11,12 @@ The API connects to a database developed for the [Movie Rating Prediction](https
 - Actor, director, producer...
 - Movie rating data
 
-## Technologies
-- Backend: [NodeJS] [TypeScript]
-- Database: [PostgreSQL] [Prisma]
+## 🛠️ Technologies
+
+**Backend**:<br>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="NodeJS" width="30"/> 
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" alt="TypeScript" width="30"/>
+
+**Database**:<br>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL" width="30"/> 
+<img src="https://raw.githubusercontent.com/prisma/prisma/master/docs/static/img/prisma-logo.svg" alt="Prisma" width="30"/>
